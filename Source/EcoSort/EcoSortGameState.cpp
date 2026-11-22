@@ -64,3 +64,15 @@ void AEcoSortGameState::ReducirNivelRio(float Cantidad)
 	NivelRio = FMath::Clamp(NivelRio - Cantidad, 0.0f, 100.0f);
 	OnNivelRioCambiado.Broadcast(NivelRio);
 }
+
+void AEcoSortGameState::SetMetaResiduos(int32 NuevaMeta)
+{
+	MetaResiduos = FMath::Max(1, NuevaMeta);
+	OnResiduoClasificado.Broadcast(ResiduosClasificados, MetaResiduos);
+}
+
+void AEcoSortGameState::SetNivelRio(float NuevoNivel)
+{
+	NivelRio = FMath::Clamp(NuevoNivel, 0.0f, 100.0f);
+	OnNivelRioCambiado.Broadcast(NivelRio);
+}

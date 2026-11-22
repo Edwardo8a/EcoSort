@@ -5,14 +5,16 @@
 #include "EcoSortBote.h"
 #include "Components/SceneComponent.h"
 #include "GameFramework/Actor.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Kismet/GameplayStatics.h"
 
 UEcoSortInteractionComponent::UEcoSortInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	RadioInteraccion = 150.0f;
-	RadioDeposito = 200.0f;
+	RadioInteraccion = 220.0f;   // Radio cómodo de recogida
+	RadioDeposito = 260.0f;      // Radio de entrega a botes
+	DistanciaApuntado = 450.0f;  // Distancia del rayo hacia la mira central
 	NombreComponenteMano = FName(TEXT("Mano"));
 	ResiduoCargado = nullptr;
 }
@@ -44,7 +46,7 @@ USceneComponent* UEcoSortInteractionComponent::ObtenerComponenteMano() const
 	return Propietario->GetRootComponent();
 }
 
-AEcoSortResiduo* UEcoSortInteractionComponent::BuscarResiduoCercano() const
+AEcoSortResiduo* UEcoSortInteractionComponent::BuscarResiduoObjetivo() const
 {
 	AActor* Propietario = GetOwner();
 	UWorld* World = GetWorld();
@@ -53,14 +55,43 @@ AEcoSortResiduo* UEcoSortInteractionComponent::BuscarResiduoCercano() const
 		return nullptr;
 	}
 
-	const FVector PosicionJugador = Propietario->GetActorLocation();
-	const float RadioAlCuadrado = FMath::Square(RadioInteraccion);
+	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+	FVector CamLoc = Propietario->GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
+	FRotator CamRot = Propietario->GetActorRotation();
 
+	if (PC && PC->PlayerCameraManager)
+	{
+		CamLoc = PC->PlayerCameraManager->GetCameraLocation();
+		CamRot = PC->PlayerCameraManager->GetCameraRotation();
+	}
+
+	const FVector CamDir = CamRot.Vector();
+
+	// 1. Rayo asistido (SphereTrace) hacia el centro de la mira
+	FHitResult Hit;
+	const FVector TraceEnd = CamLoc + (CamDir * DistanciaApuntado);
+	FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(EcoSortAimTrace), false, Propietario);
+
+	if (World->SweepSingleByChannel(Hit, CamLoc, TraceEnd, FQuat::Identity, ECC_WorldDynamic, FCollisionShape::MakeSphere(40.0f), TraceParams))
+	{
+		if (AEcoSortResiduo* ResiduoHit = Cast<AEcoSortResiduo>(Hit.GetActor()))
+		{
+			if (!ResiduoHit->EstaCargado())
+			{
+				return ResiduoHit;
+			}
+		}
+	}
+
+	// 2. Si el rayo central no impactó directo, buscar por proximidad y ángulo de visión
 	TArray<AActor*> ResiduosEnMundo;
 	UGameplayStatics::GetAllActorsOfClass(World, AEcoSortResiduo::StaticClass(), ResiduosEnMundo);
 
-	AEcoSortResiduo* ResiduoMasCercano = nullptr;
-	float MenorDistanciaAlCuadrado = RadioAlCuadrado;
+	const FVector PosJugador = Propietario->GetActorLocation();
+	const float RadioAlCuadrado = FMath::Square(RadioInteraccion);
+
+	AEcoSortResiduo* MejorResiduo = nullptr;
+	float MejorScore = -1.0f;
 
 	for (AActor* Actor : ResiduosEnMundo)
 	{
@@ -70,18 +101,28 @@ AEcoSortResiduo* UEcoSortInteractionComponent::BuscarResiduoCercano() const
 			continue;
 		}
 
-		const float DistanciaSq = FVector::DistSquared(PosicionJugador, Residuo->GetActorLocation());
-		if (DistanciaSq <= MenorDistanciaAlCuadrado)
+		FVector HaciaResiduo = Residuo->GetActorLocation() - PosJugador;
+		HaciaResiduo.Z *= 0.3f; // Menos peso a la altura para recoger fácil del piso
+		const float DistanciaSq = HaciaResiduo.SizeSquared();
+
+		if (DistanciaSq <= RadioAlCuadrado)
 		{
-			MenorDistanciaAlCuadrado = DistanciaSq;
-			ResiduoMasCercano = Residuo;
+			HaciaResiduo.Normalize();
+			const float Alineacion = FMath::Max(0.05f, FVector::DotProduct(CamDir, HaciaResiduo));
+			const float Score = Alineacion / (DistanciaSq + 1.0f);
+
+			if (Score > MejorScore)
+			{
+				MejorScore = Score;
+				MejorResiduo = Residuo;
+			}
 		}
 	}
 
-	return ResiduoMasCercano;
+	return MejorResiduo;
 }
 
-AEcoSortBote* UEcoSortInteractionComponent::BuscarBoteCercano() const
+AEcoSortBote* UEcoSortInteractionComponent::BuscarBoteObjetivo() const
 {
 	AActor* Propietario = GetOwner();
 	UWorld* World = GetWorld();
@@ -90,14 +131,40 @@ AEcoSortBote* UEcoSortInteractionComponent::BuscarBoteCercano() const
 		return nullptr;
 	}
 
-	const FVector PosicionJugador = Propietario->GetActorLocation();
-	const float RadioAlCuadrado = FMath::Square(RadioDeposito);
+	APlayerController* PC = UGameplayStatics::GetPlayerController(World, 0);
+	FVector CamLoc = Propietario->GetActorLocation() + FVector(0.0f, 0.0f, 50.0f);
+	FRotator CamRot = Propietario->GetActorRotation();
 
+	if (PC && PC->PlayerCameraManager)
+	{
+		CamLoc = PC->PlayerCameraManager->GetCameraLocation();
+		CamRot = PC->PlayerCameraManager->GetCameraRotation();
+	}
+
+	const FVector CamDir = CamRot.Vector();
+
+	// 1. Rayo hacia el contenedor que enfoca la mira
+	FHitResult Hit;
+	const FVector TraceEnd = CamLoc + (CamDir * DistanciaApuntado);
+	FCollisionQueryParams TraceParams(SCENE_QUERY_STAT(EcoSortBoteTrace), false, Propietario);
+
+	if (World->SweepSingleByChannel(Hit, CamLoc, TraceEnd, FQuat::Identity, ECC_WorldDynamic, FCollisionShape::MakeSphere(60.0f), TraceParams))
+	{
+		if (AEcoSortBote* BoteHit = Cast<AEcoSortBote>(Hit.GetActor()))
+		{
+			return BoteHit;
+		}
+	}
+
+	// 2. Por proximidad al contenedor más cercano
 	TArray<AActor*> BotesEnMundo;
 	UGameplayStatics::GetAllActorsOfClass(World, AEcoSortBote::StaticClass(), BotesEnMundo);
 
-	AEcoSortBote* BoteMasCercano = nullptr;
-	float MenorDistanciaAlCuadrado = RadioAlCuadrado;
+	const FVector PosJugador = Propietario->GetActorLocation();
+	const float RadioAlCuadrado = FMath::Square(RadioDeposito);
+
+	AEcoSortBote* MejorBote = nullptr;
+	float MenorDistanciaSq = RadioAlCuadrado;
 
 	for (AActor* Actor : BotesEnMundo)
 	{
@@ -107,15 +174,15 @@ AEcoSortBote* UEcoSortInteractionComponent::BuscarBoteCercano() const
 			continue;
 		}
 
-		const float DistanciaSq = FVector::DistSquared(PosicionJugador, Bote->GetActorLocation());
-		if (DistanciaSq <= MenorDistanciaAlCuadrado)
+		const float DistanciaSq = FVector::DistSquared(PosJugador, Bote->GetActorLocation());
+		if (DistanciaSq <= MenorDistanciaSq)
 		{
-			MenorDistanciaAlCuadrado = DistanciaSq;
-			BoteMasCercano = Bote;
+			MenorDistanciaSq = DistanciaSq;
+			MejorBote = Bote;
 		}
 	}
 
-	return BoteMasCercano;
+	return MejorBote;
 }
 
 bool UEcoSortInteractionComponent::TryInteract()
@@ -125,26 +192,26 @@ bool UEcoSortInteractionComponent::TryInteract()
 	// -------------------------------------------------------------
 	if (ResiduoCargado)
 	{
-		// 1.1 Si estamos cerca de un contenedor de reciclaje (<= 200 cm), depositarlo
-		AEcoSortBote* BoteCercano = BuscarBoteCercano();
-		if (BoteCercano)
+		// 1.1 Si apuntamos a un contenedor o estamos cerca de uno, depositar
+		AEcoSortBote* BoteObjetivo = BuscarBoteObjetivo();
+		if (BoteObjetivo)
 		{
-			BoteCercano->Depositar(ResiduoCargado);
+			BoteObjetivo->Depositar(ResiduoCargado);
 			ResiduoCargado = nullptr;
 			return true;
 		}
 
-		// 1.2 Si NO hay un contenedor cerca, soltar el residuo al suelo
+		// 1.2 Si no hay contenedor enfocado ni cercano, soltar al suelo
 		ResiduoCargado->Soltar();
 		ResiduoCargado = nullptr;
 		return true;
 	}
 
 	// -------------------------------------------------------------
-	// CASO 2: Manos libres -> Buscar y recoger el residuo más cercano (<= 150 cm)
+	// CASO 2: Manos libres -> Buscar el residuo enfocado por la mira
 	// -------------------------------------------------------------
-	AEcoSortResiduo* ResiduoCercano = BuscarResiduoCercano();
-	if (!ResiduoCercano)
+	AEcoSortResiduo* ResiduoObjetivo = BuscarResiduoObjetivo();
+	if (!ResiduoObjetivo)
 	{
 		return false;
 	}
@@ -155,7 +222,7 @@ bool UEcoSortInteractionComponent::TryInteract()
 		return false;
 	}
 
-	ResiduoCercano->Recoger(Mano);
-	ResiduoCargado = ResiduoCercano;
+	ResiduoObjetivo->Recoger(Mano);
+	ResiduoCargado = ResiduoObjetivo;
 	return true;
 }

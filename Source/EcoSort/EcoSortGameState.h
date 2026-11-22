@@ -90,6 +90,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "EcoSort|Puntaje")
 	void ReducirNivelRio(float Cantidad);
 
+	// Setters
+	UFUNCTION(BlueprintCallable, Category = "EcoSort|Estado")
+	void SetMetaResiduos(int32 NuevaMeta);
+
+	UFUNCTION(BlueprintCallable, Category = "EcoSort|Estado")
+	void SetNivelRio(float NuevoNivel);
+
 	// Getters
 	UFUNCTION(BlueprintPure, Category = "EcoSort|Estado")
 	int32 GetPuntos() const { return Puntos; }

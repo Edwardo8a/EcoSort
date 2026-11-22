@@ -12,7 +12,8 @@ class USceneComponent;
 
 /**
  * Componente de interacción para el personaje jugador (Itzel).
- * Gestiona la búsqueda de residuos en el suelo, transporte y depósito en contenedores de reciclaje.
+ * Posee detección asistida por apuntado (cámara/retículo) y proximidad para
+ * recoger residuos y depositarlos en contenedores de reciclaje con precisión.
  */
 UCLASS(ClassGroup = (EcoSort), meta = (BlueprintSpawnableComponent))
 class ECOSORT_API UEcoSortInteractionComponent : public UActorComponent
@@ -33,6 +34,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EcoSort|Interaccion")
 	float RadioDeposito;
 
+	/** Distancia máxima del rayo de apuntado desde la cámara hacia el centro de la mira */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EcoSort|Interaccion")
+	float DistanciaApuntado;
+
 	/** Nombre del componente de escena en el personaje donde se sostiene el residuo */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EcoSort|Interaccion")
 	FName NombreComponenteMano;
@@ -44,18 +49,18 @@ protected:
 	/** Busca el componente de escena "Mano" en el actor propietario */
 	USceneComponent* ObtenerComponenteMano() const;
 
-	/** Encuentra el residuo más cercano dentro del radio configurado */
-	AEcoSortResiduo* BuscarResiduoCercano() const;
+	/** Encuentra el residuo al que está apuntando la mira o el más cercano al frente */
+	AEcoSortResiduo* BuscarResiduoObjetivo() const;
 
-	/** Encuentra el contenedor más cercano dentro del radio de depósito */
-	AEcoSortBote* BuscarBoteCercano() const;
+	/** Encuentra el contenedor al que está apuntando la mira o el más cercano */
+	AEcoSortBote* BuscarBoteObjetivo() const;
 
 public:
 	/**
 	 * Acción principal de interacción invocada al presionar la tecla E:
-	 * 1. Si lleva un residuo y hay un bote a menos de 200 cm: lo deposita en el bote.
-	 * 2. Si lleva un residuo pero no hay botes cerca: lo suelta al suelo.
-	 * 3. Si tiene las manos vacías: busca y recoge el residuo más cercano a 150 cm.
+	 * 1. Si lleva un residuo y apunta/está cerca de un bote: lo deposita.
+	 * 2. Si lleva un residuo pero no hay botes: lo suelta al suelo.
+	 * 3. Si tiene manos libres: busca y recoge el residuo enfocado por la mira.
 	 * @return true si se realizó una acción con éxito.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "EcoSort|Interaccion")

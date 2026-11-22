@@ -49,3 +49,19 @@ Historial de prompts, decisiones técnicas y entregables generados para la versi
   1. Crear los Blueprints hijos siguiendo las recetas de `docs/blueprints/`.
   2. Colocar en el nivel los 3 botes y residuos de prueba.
   3. Presionar Play, recoger un residuo con `E` y llevarlo al contenedor correcto (suma puntos y se destruye) o al incorrecto (lo rechaza y resta puntos).
+
+
+---
+
+## [21/11/2026] — Fase 3: GameState, GameMode y HUD con Mira de Apuntado
+- **Prompt:** Implementar `FEcoNivelConfig` para DataTable, `AEcoSortGameMode` con detección de victoria/derrota y carga de niveles, `UEcoSortHUDBase` reactivo a delegados, mejora de apuntado asistido por cámara en `UEcoSortInteractionComponent`, script para generar `DT_Niveles` y receta de `WBP_HUD` con mira central (crosshair).
+- **Entregables C++:**
+  - `Source/EcoSort/EcoSortTipos.h`: Estructura `FEcoNivelConfig` derivada de `FTableRowBase` (meta, salud inicial, drenaje por segundo, intervalo de spawn, siguiente nivel).
+  - `Source/EcoSort/EcoSortGameState.h/.cpp`: Métodos `SetMetaResiduos()`, `SetNivelRio()` y delegados dinámicos multicast para HUD.
+  - `Source/EcoSort/EcoSortGameMode.h/.cpp`: Lógica de partida, lectura de `DT_Niveles`, temporizador de drenaje de río, condiciones de victoria/derrota (`OnVictoria`, `OnDerrota`) y creación automática del HUD.
+  - `Source/EcoSort/EcoSortHUDBase.h/.cpp`: Clase base UMG que se suscribe a los eventos del GameState y expone BlueprintImplementableEvents para actualizar barras, puntos y feedback.
+  - `Source/EcoSort/EcoSortInteractionComponent.h/.cpp`: Apuntado mejorado con SphereTrace desde la cámara hacia el centro de la mira y ponderación por ángulo frontal.
+- **Entregables de Documentación & Scripts:**
+  - `Scripts/crear_datatable_niveles.py`: Script para crear y configurar `/Game/EcoSort/Datos/DT_Niveles`.
+  - `docs/blueprints/WBP_HUD.md`: Receta detallada paso a paso para diseñar `WBP_HUD` con mira central de 8x8px, barra de salud de río, barra de hábitat, puntos y eventos de feedback visual (+10 verde / -5 rojo).
+- **Resultado de Compilación:** `Result: Succeeded` (0 errores) vía `Build.bat`.
