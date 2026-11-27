@@ -9,6 +9,7 @@
 
 class UDataTable;
 class UEcoSortHUDBase;
+class UUserWidget;
 class AEcoSortGameState;
 
 /**
@@ -43,6 +44,14 @@ protected:
 	/** Instancia del HUD creada en pantalla */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "EcoSort|UI")
 	TObjectPtr<UEcoSortHUDBase> HUDWidgetInstancia;
+
+	/** Clase del Widget de Victoria a mostrar (WBP_Victoria) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EcoSort|UI")
+	TSubclassOf<UUserWidget> VictoriaWidgetClass;
+
+	/** Clase del Widget de Derrota a mostrar (WBP_Derrota) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "EcoSort|UI")
+	TSubclassOf<UUserWidget> DerrotaWidgetClass;
 
 	/** Datos del nivel actual leídos del DataTable */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "EcoSort|Configuracion")

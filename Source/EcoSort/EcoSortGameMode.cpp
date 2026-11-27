@@ -3,6 +3,7 @@
 #include "EcoSortGameMode.h"
 #include "EcoSortGameState.h"
 #include "EcoSortHUDBase.h"
+#include "Blueprint/UserWidget.h"
 #include "Engine/DataTable.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -151,16 +152,38 @@ void AEcoSortGameMode::HandleNivelRioCambiado(float NuevoNivel)
 
 void AEcoSortGameMode::OnVictoria_Implementation()
 {
-	// Puede sobreescribirse en Blueprints para mostrar el widget WBP_Victoria
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC && VictoriaWidgetClass)
+	{
+		UUserWidget* WidgetVictoria = CreateWidget<UUserWidget>(PC, VictoriaWidgetClass);
+		if (WidgetVictoria)
+		{
+			WidgetVictoria->AddToViewport(10);
+			PC->SetShowMouseCursor(true);
+			PC->SetInputMode(FInputModeUIOnly());
+		}
+	}
+
 	if (GEngine)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("¡VICTORIA! Nivel completado."));
+		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Green, TEXT("¡VICTORIA! Nivel completado con éxito."));
 	}
 }
 
 void AEcoSortGameMode::OnDerrota_Implementation()
 {
-	// Puede sobreescribirse en Blueprints para mostrar el widget WBP_Derrota
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (PC && DerrotaWidgetClass)
+	{
+		UUserWidget* WidgetDerrota = CreateWidget<UUserWidget>(PC, DerrotaWidgetClass);
+		if (WidgetDerrota)
+		{
+			WidgetDerrota->AddToViewport(10);
+			PC->SetShowMouseCursor(true);
+			PC->SetInputMode(FInputModeUIOnly());
+		}
+	}
+
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("¡DERROTA! El río se ha contaminado por completo."));
