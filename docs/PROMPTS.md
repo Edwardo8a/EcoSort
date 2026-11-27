@@ -65,3 +65,11 @@ Historial de prompts, decisiones técnicas y entregables generados para la versi
   - `Scripts/crear_datatable_niveles.py`: Script para crear y configurar `/Game/EcoSort/Datos/DT_Niveles`.
   - `docs/blueprints/WBP_HUD.md`: Receta detallada paso a paso para diseñar `WBP_HUD` con mira central de 8x8px, barra de salud de río, barra de hábitat, puntos y eventos de feedback visual (+10 verde / -5 rojo).
 - **Resultado de Compilación:** `Result: Succeeded` (0 errores) vía `Build.bat`.
+- **Prueba en Juego y Verificación:**
+  - Verificado en editor por el usuario: `WBP_HUD` activo en pantalla, mira central centrada, barra de río azul al 100%, barra de hábitat verde al 20%, contador de puntos en 20 y contador de residuos clasificados en 2/10 al recoger y depositar residuos con la tecla `E`.
+
+---
+
+## [26/11/2026] — Fase 4: Spawner de Residuos y Limpieza / Restauración del Río
+- **Prompt:** Implementar el generador de residuos automático (`AEcoSortSpawner`), el sistema de restauración ambiental progresiva (`AEcoSortRestauracion`) y el widget de victoria de nivel (`WBP_Victoria`).
+

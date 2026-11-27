@@ -12,9 +12,9 @@ UEcoSortInteractionComponent::UEcoSortInteractionComponent()
 {
 	PrimaryComponentTick.bCanEverTick = false;
 
-	RadioInteraccion = 220.0f;   // Radio cómodo de recogida
-	RadioDeposito = 260.0f;      // Radio de entrega a botes
-	DistanciaApuntado = 450.0f;  // Distancia del rayo hacia la mira central
+	RadioInteraccion = 350.0f;   // Radio amplio y cómodo de recogida (3.5 metros)
+	RadioDeposito = 350.0f;      // Radio de entrega a botes
+	DistanciaApuntado = 1500.0f; // 15 metros para que el rayo desde la cámara llegue al suelo
 	NombreComponenteMano = FName(TEXT("Mano"));
 	ResiduoCargado = nullptr;
 }
