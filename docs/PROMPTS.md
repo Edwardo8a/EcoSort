@@ -72,4 +72,16 @@ Historial de prompts, decisiones técnicas y entregables generados para la versi
 
 ## [26/11/2026] — Fase 4: Spawner de Residuos y Limpieza / Restauración del Río
 - **Prompt:** Implementar el generador de residuos automático (`AEcoSortSpawner`), el sistema de restauración ambiental progresiva (`AEcoSortRestauracion`) y el widget de victoria de nivel (`WBP_Victoria`).
+- **Entregables C++:**
+  - `Source/EcoSort/EcoSortSpawner.h/.cpp`: Spawner configurable con radio de 800 cm, límite de 8 residuos en escena, temporizador a 4.5s y trazado hacia el suelo.
+  - `Source/EcoSort/EcoSortRestauracion.h/.cpp`: Controlador de transformación ambiental del río (cambio dinámico de color turbio a turquesa cristalino e hitos de fauna a 30%, 60% y 100%).
+  - `Source/EcoSort/EcoSortGameMode.h/.cpp`: Lógica de victoria automática con display de `VictoriaWidgetClass` y remoción de prefijos de streaming en reinicio.
+- **Entregables de Blueprints & UI:**
+  - `BP_EcoSortSpawner`: Blueprint hijo configurado con residuos PET, Lata y Papel colocado en el nivel.
+  - `BP_EcoSortRestauracion`: Blueprint hijo vinculado al plano de agua `Rio_Agua_Rio`.
+  - `WBP_Victoria`: Pantalla de felicitaciones con botón de reinicio configurado vía `Open Level (by Name)`.
+  - `Config/DefaultEngine.ini`: Asignación de `Nivel1_OrillaGris` como mapa por defecto del editor y del juego.
+- **Prueba en Juego y Verificación:**
+  - Nivel 1 jugado de inicio a fin: residuos generándose continuamente, recogida y clasificación en botes, barras de río y hábitat reaccionando, meta de 10/10 alcanzada, pantalla de victoria desplegada y reinicio perfecto del nivel.
+
 
