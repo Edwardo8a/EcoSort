@@ -203,7 +203,8 @@ void AEcoSortGameMode::ReiniciarNivelActual()
 	UWorld* World = GetWorld();
 	if (World)
 	{
-		const FString NombreMapaActual = World->GetMapName();
+		FString NombreMapaActual = World->GetMapName();
+		NombreMapaActual.RemoveFromStart(World->StreamingLevelsPrefix);
 		UGameplayStatics::OpenLevel(this, FName(*NombreMapaActual));
 	}
 }
